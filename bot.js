@@ -13,7 +13,7 @@ const bot = new TelegramBot(telegramToken, { polling: true });
 
 // ساخت یک نمونه از مدل هوش مصنوعی
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 console.log("Bot has been started...");
 
