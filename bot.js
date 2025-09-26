@@ -15,7 +15,7 @@ if (!telegramToken || !geminiApiKey) {
 
 const bot = new TelegramBot(telegramToken, { polling: true });
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 // ===== بارگذاری دانش متمرکز از فایل knowledge.txt =====
 let thesisKnowledge = "";
