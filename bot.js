@@ -22,10 +22,10 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 let thesisKnowledge = "";
 try {
   console.log("در حال بارگذاری دانش متمرکز از فایل...");
-  thesisKnowledge = fs.readFileSync("knowledge.txt", "utf-8");
+  thesisKnowledge = fs.readFileSync("thesis.txt", "utf-8");
   console.log("دانش متمرکز با موفقیت بارگذاری شد.");
 } catch (error) {
-  console.error("خطا: فایل 'knowledge.txt' پیدا نشد. لطفا ابتدا این فایل را بسازید.");
+  console.error("خطا: فایل 'thesis.txt' پیدا نشد. لطفا ابتدا این فایل را بسازید.");
   process.exit(1);
 }
 
