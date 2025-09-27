@@ -15,7 +15,7 @@ if (!telegramToken || !geminiApiKey) {
 
 const bot = new TelegramBot(telegramToken, { polling: true });
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-// تصحیح نام مدل به آخرین نسخه پایدار
+// تصحیح نام مدل به آخرین نسخه پایدار و صحیح
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 // ===== بارگذاری دانش متمرکز از فایل knowledge.txt =====
@@ -33,87 +33,7 @@ try {
 const conversationHistory = {};
 const HISTORY_LIMIT = 20;
 
-console.log("بات «بی‌بی بتول» آنلاین شد...");
-
-// ===== پردازشگر اصلی پیام‌ها (برای منشن و ریپلای) =====
-bot.on("message", async (msg) => {
-  // اگر پیام یک دستور بود، توسط پردازشگرهای دیگر مدیریت می‌شود، پس اینجا کاری نکن
-  if (msg.text && msg.text.startsWith("/")) return;
-
-  const chatId = msg.chat.id;
-  const userMessage = msg.text;
-
-  if (!userMessage) return;
-
-  // ذخیره پیام‌ها در تاریخچه
-  if (!conversationHistory[chatId]) {
-    conversationHistory[chatId] = [];
-  }
-  const messageData = `${msg.from.first_name || "User"}: ${userMessage}`;
-  conversationHistory[chatId].push(messageData);
-  if (conversationHistory[chatId].length > HISTORY_LIMIT) {
-    conversationHistory[chatId].shift();
-  }
-
-  try {
-    const botInfo = await bot.getMe();
-    const botUsername = `@${botInfo.username}`;
-
-    // فقط در صورت منشن شدن پاسخ بده
-    if (userMessage.includes(botUsername)) {
-      const userQuery = userMessage.replace(botUsername, "").trim();
-      if (!userQuery) return;
-
-      console.log(`[Chat ID: ${chatId}] درخواست جدید دریافت شد: "${userQuery}"`);
-      bot.sendChatAction(chatId, "typing");
-
-      // بررسی وجود ریپلای
-      let repliedMessageContext = "";
-      if (msg.reply_to_message && msg.reply_to_message.text) {
-        const originalSender = msg.reply_to_message.from.first_name || "User";
-        const originalText = msg.reply_to_message.text;
-        repliedMessageContext = `
-                --- پیام ریپلای شده (بافتار اصلی سوال این است) ---
-                کاربر به این پیام از "${originalSender}" ریپلای کرده است: "${originalText}"
-                ----------------------------------------------------
-                `;
-      }
-
-      const chatHistory = conversationHistory[chatId].join("\n");
-
-      const augmentedPrompt = `
-                نقش شما: شما باباعلی هستید، یک دستیار هوش مصنوعی متخصص در حوزه ادبیات الکترونیک با دانش کاترین هیلز. شما بسیار دقیق، سنجیده، علمی و ساختاریافته صحبت می‌کنید.
-
-                دستورالعمل اصلی:
-                1.  برای پاسخ به سوال کاربر، ابتدا "پیام ریپلای شده" (اگر وجود دارد) و سپس "تاریخچه مکالمات" را بخوان تا بافتار سوال را کاملاً درک کنی.
-                2.  سپس، فقط و فقط بر اساس "متن اصلی پایان‌نامه" که در زیر آمده، به سوال پاسخ بده.
-                3.  به هیچ وجه از دانش عمومی خود استفاده نکن. اگر پاسخ در "متن اصلی" نبود، به صراحت بگو: "پاسخ این سوال در متن خلاصه شده‌ای که در اختیار من است، یافت نشد."
-
-                --- متن اصلی (تنها منبع دانش شما) ---
-                ${thesisKnowledge}
-                ----------------------------------------
-                
-                ${repliedMessageContext}
-
-                --- تاریخچه مکالمات اخیر گروه (برای بافتار کلی) ---
-                ${chatHistory}
-                --------------------------------------------------
-
-                سوال/درخواست نهایی کاربر: "${userQuery}"
-            `;
-
-      const result = await model.generateContent(augmentedPrompt);
-      const responseText = result.response.text();
-
-      // به پیام کاربر ریپلای می‌کند
-      bot.sendMessage(chatId, responseText, { reply_to_message_id: msg.message_id });
-      console.log(`[Chat ID: ${chatId}] پاسخ تخصصی ارسال شد.`);
-    }
-  } catch (error) {
-    console.error("خطا در پردازش پیام:", error);
-    bot.sendMessage(chatId, "متاسفانه مشکلی در پردازش درخواست شما پیش آمد.");
-  }
-});
+console.log("بات دستیار آنلاین شد...");
 
 // ===== پردازشگر دستور /خلاصه =====
 bot.onText(/\/خلاصه|\/summary/, async (msg) => {
@@ -152,27 +72,100 @@ bot.onText(/\/خلاصه|\/summary/, async (msg) => {
 // ===== پردازشگر دستور /بگرد =====
 bot.onText(/\/بگرد (.+)|\/search (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
-  const keyword = match[1]; // متن بعد از دستور
+  const keyword = match[1];
   console.log(`[Chat ID: ${chatId}] درخواست جستجو برای "${keyword}" دریافت شد.`);
 
-  // تقسیم متن به پاراگراف‌ها (بر اساس خطوط خالی)
   const paragraphs = thesisKnowledge.split(/\n\s*\n/);
-
-  // پیدا کردن پاراگراف‌هایی که شامل کلیدواژه هستند
-  const results = paragraphs.filter((p) => p.includes(keyword));
+  const results = paragraphs.filter((p) => p.toLowerCase().includes(keyword.toLowerCase()));
 
   if (results.length > 0) {
     let response = `✅ نتایج یافت شده برای کلمه «${keyword}»:\n\n`;
-    // ارسال حداکثر ۳ پاراگراف برای جلوگیری از اسپم
     response += results.slice(0, 3).join("\n\n---\n\n");
 
     if (results.length > 3) {
       response += `\n\n... و ${results.length - 3} نتیجه دیگر نیز یافت شد.`;
     }
 
-    bot.sendMessage(chatId, response);
+    bot.sendMessage(chatId, response, { reply_to_message_id: msg.message_id });
   } else {
-    bot.sendMessage(chatId, `❌ هیچ نتیجه‌ای برای کلمه «${keyword}» در متن یافت نشد.`);
+    bot.sendMessage(chatId, `❌ هیچ نتیجه‌ای برای کلمه «${keyword}» در متن یافت نشد.`, {
+      reply_to_message_id: msg.message_id,
+    });
+  }
+});
+
+// ===== پردازشگر اصلی پیام‌ها (برای منشن و ریپلای) =====
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userMessage = msg.text;
+
+  // اگر پیام متنی نیست یا با / شروع می‌شود، آن را نادیده بگیر
+  if (!userMessage || userMessage.startsWith("/")) return;
+
+  // ذخیره پیام‌ها در تاریخچه
+  if (!conversationHistory[chatId]) {
+    conversationHistory[chatId] = [];
+  }
+  const messageData = `${msg.from.first_name || "User"}: ${userMessage}`;
+  conversationHistory[chatId].push(messageData);
+  if (conversationHistory[chatId].length > HISTORY_LIMIT) {
+    conversationHistory[chatId].shift();
+  }
+
+  try {
+    const botInfo = await bot.getMe();
+    const botUsername = `@${botInfo.username}`;
+
+    if (userMessage.includes(botUsername)) {
+      const userQuery = userMessage.replace(botUsername, "").trim();
+      if (!userQuery) return;
+
+      console.log(`[Chat ID: ${chatId}] درخواست جدید دریافت شد: "${userQuery}"`);
+      bot.sendChatAction(chatId, "typing");
+
+      let repliedMessageContext = "";
+      if (msg.reply_to_message && msg.reply_to_message.text) {
+        const originalSender = msg.reply_to_message.from.first_name || "User";
+        const originalText = msg.reply_to_message.text;
+        repliedMessageContext = `
+                --- پیام ریپلای شده (بافتار اصلی سوال این است) ---
+                کاربر به این پیام از "${originalSender}" ریپلای کرده است: "${originalText}"
+                ----------------------------------------------------
+                `;
+      }
+
+      const chatHistory = conversationHistory[chatId].join("\n");
+
+      const augmentedPrompt = `
+                نقش شما: شما یک متخصص برجسته در حوزه ادبیات الکترونیک با دانش عمیق کاترین هیلز هستید. شما بسیار دقیق، سنجیده، علمی و ساختاریافته صحبت می‌کنید.
+
+                دستورالعمل اصلی:
+                1.  دانش اصلی و مرجع شما، "متن پایان‌نامه" است که در زیر آمده. در پاسخ‌هایت به این متن اولویت بده و در صورت امکان به آن استناد کن.
+                2.  با این حال، دانش شما محدود به این متن نیست. شما می‌توانید از دانش عمومی خود به عنوان یک متخصص ادبیات الکترونیک، فلسفه، ابزارشناسی، انسان‌شناسی و مهندسی نرم افزار برای تکمیل، غنی‌سازی و ارائه دیدگاه‌های عمیق‌تر استفاده کنی، اما پاسخ اصلی بهتر است با متن پایان‌نامه مرتبط باشد.
+                3.  از "پیام ریپلای شده" (اگر وجود دارد) و "تاریخچه مکالمات" برای درک کامل بافتار سوال کاربر استفاده کن.
+
+                --- متن پایان‌نامه (منبع اصلی دانش) ---
+                ${thesisKnowledge}
+                ----------------------------------------
+                
+                ${repliedMessageContext}
+
+                --- تاریخچه مکالمات اخیر گروه (برای بافتار) ---
+                ${chatHistory}
+                --------------------------------------------------
+
+                سوال/درخواست نهایی کاربر: "${userQuery}"
+            `;
+
+      const result = await model.generateContent(augmentedPrompt);
+      const responseText = result.response.text();
+
+      bot.sendMessage(chatId, responseText, { reply_to_message_id: msg.message_id });
+      console.log(`[Chat ID: ${chatId}] پاسخ تخصصی ارسال شد.`);
+    }
+  } catch (error) {
+    console.error("خطا در پردازش پیام:", error);
+    bot.sendMessage(chatId, "متاسفانه مشکلی در پردازش درخواست شما پیش آمد.");
   }
 });
 
