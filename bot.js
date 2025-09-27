@@ -79,14 +79,39 @@ bot.onText(/\/بگرد (.+)|\/search (.+)/, (msg, match) => {
   const results = paragraphs.filter((p) => p.toLowerCase().includes(keyword.toLowerCase()));
 
   if (results.length > 0) {
-    let response = `✅ نتایج یافت شده برای کلمه «${keyword}»:\n\n`;
-    response += results.slice(0, 3).join("\n\n---\n\n");
+    let fullResponse = `✅ ${results.length} نتیجه برای کلمه «${keyword}» یافت شد:\n\n`;
+    fullResponse += results.join("\n\n---\n\n");
 
-    if (results.length > 3) {
-      response += `\n\n... و ${results.length - 3} نتیجه دیگر نیز یافت شد.`;
+    const MAX_MESSAGE_LENGTH = 4096;
+
+    // اگر پاسخ از حد مجاز طولانی‌تر است، آن را تقسیم کن
+    if (fullResponse.length > MAX_MESSAGE_LENGTH) {
+      bot.sendMessage(
+        chatId,
+        `✅ ${results.length} نتیجه برای کلمه «${keyword}» یافت شد. به دلیل طولانی بودن، نتایج در چند پیام ارسال می‌شود:`,
+        { reply_to_message_id: msg.message_id }
+      );
+
+      let currentMessage = "";
+      results.forEach((paragraph, index) => {
+        const separator = "\n\n---\n\n";
+        // اگر اضافه کردن پاراگراف بعدی پیام را طولانی می‌کند، پیام فعلی را بفرست و یک پیام جدید شروع کن
+        if (currentMessage.length + paragraph.length + separator.length > MAX_MESSAGE_LENGTH) {
+          bot.sendMessage(chatId, currentMessage);
+          currentMessage = paragraph;
+        } else {
+          currentMessage += (currentMessage ? separator : "") + paragraph;
+        }
+      });
+
+      // ارسال آخرین بخش باقیمانده
+      if (currentMessage) {
+        bot.sendMessage(chatId, currentMessage);
+      }
+    } else {
+      // اگر پاسخ کوتاه است، آن را در یک پیام بفرست
+      bot.sendMessage(chatId, fullResponse, { reply_to_message_id: msg.message_id });
     }
-
-    bot.sendMessage(chatId, response, { reply_to_message_id: msg.message_id });
   } else {
     bot.sendMessage(chatId, `❌ هیچ نتیجه‌ای برای کلمه «${keyword}» در متن یافت نشد.`, {
       reply_to_message_id: msg.message_id,
@@ -143,7 +168,7 @@ bot.on("message", async (msg) => {
                 1.  دانش اصلی و مرجع شما، "متن پایان‌نامه" است که در زیر آمده. در پاسخ‌هایت به این متن اولویت بده و در صورت امکان به آن استناد کن.
                 2.  با این حال، دانش شما محدود به این متن نیست. شما می‌توانید از دانش عمومی خود به عنوان یک متخصص ادبیات الکترونیک، فلسفه، ابزارشناسی، انسان‌شناسی و مهندسی نرم افزار برای تکمیل، غنی‌سازی و ارائه دیدگاه‌های عمیق‌تر استفاده کنی، اما پاسخ اصلی بهتر است با متن پایان‌نامه مرتبط باشد.
                 3.  از "پیام ریپلای شده" (اگر وجود دارد) و "تاریخچه مکالمات" برای درک کامل بافتار سوال کاربر استفاده کن.
-
+                4. تا از تو نخواسته اند که طولانی و مفصل توضیح دهی، این کار را نکن و سعی کن کوتاه پاسخ دهی. 
                 --- متن پایان‌نامه (منبع اصلی دانش) ---
                 ${thesisKnowledge}
                 ----------------------------------------
