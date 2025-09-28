@@ -32,8 +32,7 @@ async function initializeSearchService() {
 
   try {
     // *** تغییر ۱: استفاده از مدل کوچک‌تر و سبک‌تر (تصمیم صحیح شما) ***
-    const modelName = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
-
+    const modelName = "Xenova/distiluse-base-multilingual-cased-v1"; // چندزبانه
     console.log(`⏳ در حال بارگذاری نسخه کامل مدل سبک (${modelName})...`);
 
     // *** تغییر ۲: حذف کامل گزینه "quantized: true" (تصحیح اشتباه من) ***
