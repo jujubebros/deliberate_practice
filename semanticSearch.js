@@ -31,11 +31,12 @@ async function initializeSearchService() {
   }
 
   try {
-    // *** تغییر ۱: استفاده از مدل کوچک‌تر و سبک‌تر (تصمیم صحیح شما) ***
-    const modelName = "Xenova/distiluse-base-multilingual-cased-v1"; // چندزبانه
-    console.log(`⏳ در حال بارگذاری نسخه کامل مدل سبک (${modelName})...`);
+    // ۱. استفاده از مدل کوچک و سبک که برای هاست رایگان مناسب است.
+    const modelName = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
 
-    // *** تغییر ۲: حذف کامل گزینه "quantized: true" (تصحیح اشتباه من) ***
+    console.log(`⏳ در حال بارگذاری نسخه کامل و استاندارد مدل ${modelName}...`);
+
+    // ۲. حذف کامل و قطعی گزینه "quantized: true".
     modelPipeline = await pipeline("feature-extraction", modelName);
 
     console.log("✅ مدل با موفقیت بارگذاری و آماده استفاده شد.");
