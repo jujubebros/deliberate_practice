@@ -42,7 +42,7 @@ bot.onText(/\/بگرد (.+)|\/search (.+)/, async (msg, match) => {
     خروجی فقط پاراگراف‌های مرتبط باشد، به ترتیب شباهت. اگر هیچ مورد مرتبطی نبود، بنویس «نتیجه‌ای یافت نشد».
 
     --- پاراگراف‌ها ---
-    ${thesisEmbeddings.map((p, i) => `(${i + 1}) ${p.text}`).join("\n\n")}
+    ${thesisEmbeddings.map((p, i) => `(${i + 1}) ${p.text.text}`).join("\n\n")}
     -------------------
 
     عبارت جستجو: ${keyword}
@@ -87,7 +87,7 @@ bot.on("message", async (msg) => {
       const chatHistory = conversationHistory[chatId].join("\n");
       const thesisText = thesisEmbeddings
         .slice(0, 50)
-        .map((p, i) => `(${i + 1}) ${p.text}`)
+        .map((p, i) => `(${i + 1}) ${p.text.text}`)
         .join("\n\n");
 
       const prompt = `
