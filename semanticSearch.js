@@ -14,10 +14,8 @@ let corpusTexts = [];
 
 // ۲. تابع اصلی برای آماده‌سازی سرویس جستجو
 async function initializeSearchService() {
-  // منتظر می‌مانیم تا ماژول ترانسفورمرز بارگذاری شود
   await loadModelPromise;
 
-  // بارگذاری داده‌های رساله از فایل JSON
   try {
     console.log("📥 بارگذاری بردارهای رساله برای جستجو...");
     const rawData = fs.readFileSync("thesis_embeddings.json", "utf-8");
@@ -32,19 +30,15 @@ async function initializeSearchService() {
     throw error;
   }
 
-  // بارگذاری مدل هوش مصنوعی به صورت محلی
   try {
-    console.log(
-      "⏳ در حال بارگذاری مدل heydariAI/persian-embeddings... (این مرحله فقط یک بار در شروع اجرا می‌شود و ممکن است زمان‌بر باشد)"
-    );
-    // در صورت شکست، این کد را جایگزین کنید
-    modelPipeline = await pipeline(
-      "feature-extraction",
-      "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-      {
-        quantized: true,
-      }
-    );
+    // *** تغییر ۱: استفاده از مدل کوچک‌تر و سبک‌تر (تصمیم صحیح شما) ***
+    const modelName = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
+
+    console.log(`⏳ در حال بارگذاری نسخه کامل مدل سبک (${modelName})...`);
+
+    // *** تغییر ۲: حذف کامل گزینه "quantized: true" (تصحیح اشتباه من) ***
+    modelPipeline = await pipeline("feature-extraction", modelName);
+
     console.log("✅ مدل با موفقیت بارگذاری و آماده استفاده شد.");
   } catch (error) {
     console.error("❌ خطا در بارگذاری مدل از Hugging Face:", error);
@@ -60,23 +54,19 @@ async function search(query, top_k = 5) {
   }
 
   try {
-    // مرحله ۱: بردارسازی سوال کاربر با استفاده از مدل محلی (شامل Pooling)
     const queryEmbedding = await modelPipeline(query, {
       pooling: "mean",
       normalize: true,
     });
     const queryVector = Array.from(queryEmbedding.data);
 
-    // مرحله ۲: محاسبه شباهت
     const similarities = corpusVectors.map((corpusVector) => cosineSimilarity(queryVector, corpusVector));
 
-    // مرحله ۳: پیدا کردن نتایج برتر
     const topResults = similarities
       .map((score, index) => ({ score, index }))
       .sort((a, b) => b.score - a.score)
       .slice(0, top_k);
 
-    // مرحله ۴: برگرداندن پاراگراف‌های متناظر
     return topResults.map((result) => ({
       text: corpusTexts[result.index],
       score: result.score,
