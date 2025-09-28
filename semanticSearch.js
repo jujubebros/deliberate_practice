@@ -37,9 +37,7 @@ async function initializeSearchService() {
     console.log(
       "⏳ در حال بارگذاری مدل heydariAI/persian-embeddings... (این مرحله فقط یک بار در شروع اجرا می‌شود و ممکن است زمان‌بر باشد)"
     );
-    modelPipeline = await pipeline("feature-extraction", "heydariAI/persian-embeddings", {
-      quantized: true, // مهم: برای کاهش مصرف حافظه در هاست‌های رایگان
-    });
+    modelPipeline = await pipeline("feature-extraction", "heydariAI/persian-embeddings");
     console.log("✅ مدل با موفقیت بارگذاری و آماده استفاده شد.");
   } catch (error) {
     console.error("❌ خطا در بارگذاری مدل از Hugging Face:", error);
